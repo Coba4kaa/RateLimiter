@@ -20,10 +20,6 @@ public class User
         Age = age;
     }
 
-    public User()
-    {
-    }
-
     public int Id { get; }
     public string Login { get; }
     public string Password { get; }
