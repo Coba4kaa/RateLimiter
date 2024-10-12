@@ -1,3 +1,4 @@
+using UserService.Repository;
 using UserService.Service.DomainModel;
 
 namespace UserService.Service.DomainService;

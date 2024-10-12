@@ -19,7 +19,8 @@ public class UserRepository(string connectionString) : IUserRepository
 
         try
         {
-            await connection.ExecuteAsync(query, parameters);
+            var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+            await connection.ExecuteAsync(command);
             return true;
         }
         catch (PostgresException)
@@ -37,7 +38,8 @@ public class UserRepository(string connectionString) : IUserRepository
 
         try
         {
-            return await connection.QueryFirstOrDefaultAsync<User>(query, parameters);
+            var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+            return await connection.QueryFirstOrDefaultAsync<User>(command);
         }
         catch (PostgresException)
         {
@@ -55,7 +57,8 @@ public class UserRepository(string connectionString) : IUserRepository
 
         try
         {
-            return await connection.QueryAsync<User>(query, parameters);
+            var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+            return await connection.QueryAsync<User>(command);
         }
         catch (PostgresException)
         {
@@ -76,7 +79,8 @@ public class UserRepository(string connectionString) : IUserRepository
 
         try
         {
-            await connection.ExecuteAsync(query, parameters);
+            var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+            await connection.ExecuteAsync(command);
             return true;
         }
         catch (PostgresException)
@@ -94,7 +98,8 @@ public class UserRepository(string connectionString) : IUserRepository
 
         try
         {
-            await connection.ExecuteAsync(query, parameters);
+            var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+            await connection.ExecuteAsync(command);
             return true;
         }
         catch (PostgresException)

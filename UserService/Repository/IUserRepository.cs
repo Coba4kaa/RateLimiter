@@ -1,4 +1,6 @@
-namespace UserService.Service.DomainModel;
+using UserService.Service.DomainModel;
+
+namespace UserService.Repository;
 
 public interface IUserRepository
 {
