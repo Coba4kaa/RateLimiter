@@ -1,8 +1,10 @@
+using UserService.Service.DomainModel;
+
 namespace UserService.Controller;
 
 using FluentValidation;
 
-public class UserValidator : AbstractValidator<Service.User>
+public class UserValidator : AbstractValidator<User>
 {
     public UserValidator()
     {

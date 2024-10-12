@@ -1,4 +1,4 @@
-namespace UserService.Service;
+namespace UserService.Service.DomainModel;
 
 public class User
 {
