@@ -7,15 +7,14 @@ public class UserConverter(IUserFactory userFactory) : IUserConverter
 {
     public UserDbModel ConvertToDbModel(User user)
     {
-        return new UserDbModel
-        {
-            Id = user.Id,
-            Login = user.Login,
-            Password = user.Password,
-            Name = user.Name,
-            Surname = user.Surname,
-            Age = user.Age
-        };
+        return new UserDbModel(
+            user.Id,
+            user.Login,
+            user.Password,
+            user.Name,
+            user.Surname,
+            user.Age
+        );
     }
 
     public User ConvertToDomainModel(UserDbModel dbModel)
