@@ -1,9 +1,52 @@
 syntax = "proto3";
 
-option csharp_namespace = "RateLimiter.Writer";
+option csharp_namespace = "RateLimiter.Writer.Grpc";
 
 package writer;
 
 service Writer {
-  
+    rpc CreateRateLimit (CreateRateLimitRequest) returns (CreateRateLimitResponse);
+    rpc GetRateLimitByRoute (GetRateLimitByRouteRequest) returns (GetRateLimitByRouteResponse);
+    rpc UpdateRateLimit (UpdateRateLimitRequest) returns (UpdateRateLimitResponse);
+    rpc DeleteRateLimit (DeleteRateLimitRequest) returns (DeleteRateLimitResponse);
+}
+
+message RateLimit{
+    string route = 1;
+    int32 requestsPerMinute = 2;
+}
+
+message CreateRateLimitRequest{
+    RateLimit rateLimit = 1;
+}
+
+message CreateRateLimitResponse{
+    bool success = 1;
+    int32 statusCode = 2;
+}
+
+message GetRateLimitByRouteRequest{
+    string route = 1;
+}
+
+message GetRateLimitByRouteResponse{
+    RateLimit rateLimit = 1;
+}
+
+message UpdateRateLimitRequest{
+    RateLimit rateLimit = 1;
+}
+
+message UpdateRateLimitResponse{
+    bool success = 1;
+    int32 statusCode = 2;
+}
+
+message DeleteRateLimitRequest{
+    string route = 1;
+}
+
+message DeleteRateLimitResponse{
+    bool success = 1;
+    int32 statusCode = 2;
 }
