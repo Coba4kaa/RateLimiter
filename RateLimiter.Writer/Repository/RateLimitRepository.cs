@@ -16,8 +16,9 @@ public class RateLimitRepository : IRateLimitRepository
         _rateLimitCollection = mongoDatabase.GetCollection<RateLimitDbModel>("rate_limits");
     }
 
-    public async Task<bool> CreateAsync(RateLimitDbModel rateLimitDbModel, CancellationToken cancellationToken)
+    public async Task<bool> CreateAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
+        var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
         try
         {
             var existing = await _rateLimitCollection
@@ -53,8 +54,9 @@ public class RateLimitRepository : IRateLimitRepository
         }
     }
 
-    public async Task<bool> UpdateAsync(RateLimitDbModel rateLimitDbModel, CancellationToken cancellationToken)
+    public async Task<bool> UpdateAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
+        var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
         try
         {
             var updateDefinition = Builders<RateLimitDbModel>.Update

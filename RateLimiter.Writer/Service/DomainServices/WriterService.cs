@@ -15,8 +15,7 @@ public class WriterService : IWriterService {
     
     public async Task<bool> CreateRateLimitAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
-        var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
-        return await _rateLimitRepository.CreateAsync(rateLimitDbModel, cancellationToken);
+        return await _rateLimitRepository.CreateAsync(rateLimitDomainModel, cancellationToken);
     }
 
     public async Task<RateLimitDomainModel?> GetRateLimitByRouteAsync(string route, CancellationToken cancellationToken)
@@ -26,8 +25,7 @@ public class WriterService : IWriterService {
 
     public async Task<bool> UpdateRateLimitAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
-        var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
-        return await _rateLimitRepository.UpdateAsync(rateLimitDbModel, cancellationToken);
+        return await _rateLimitRepository.UpdateAsync(rateLimitDomainModel, cancellationToken);
     }
 
     public async Task<bool> DeleteRateLimitAsync(string route, CancellationToken cancellationToken)
