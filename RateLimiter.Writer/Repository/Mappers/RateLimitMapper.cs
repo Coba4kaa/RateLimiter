@@ -1,7 +1,7 @@
 using RateLimiter.Writer.Repository.DbModels;
 using RateLimiter.Writer.Service.DomainModels;
 
-namespace RateLimiter.Writer.Service.Mappers;
+namespace RateLimiter.Writer.Repository.Mappers;
 
 using Riok.Mapperly.Abstractions;
 

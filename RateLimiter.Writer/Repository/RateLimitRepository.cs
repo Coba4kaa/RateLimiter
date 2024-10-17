@@ -1,7 +1,7 @@
 using MongoDB.Driver;
 using RateLimiter.Writer.Repository.DbModels;
+using RateLimiter.Writer.Repository.Mappers;
 using RateLimiter.Writer.Service.DomainModels;
-using RateLimiter.Writer.Service.Mappers;
 
 namespace RateLimiter.Writer.Repository;
 
