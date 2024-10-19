@@ -45,10 +45,12 @@ message GetUserByNameRequest {
 
 message UsersResponse {
     repeated User users = 1;
+    string message = 2;
 }
 
 message UserResponse {
     User user = 1;
+    string message = 2;
 }
 
 message UpdateUserRequest {
@@ -61,6 +63,7 @@ message UpdateUserRequest {
 
 message UpdateUserResponse {
     bool success = 1;
+    string message = 2;
 }
 
 message DeleteUserRequest {
@@ -69,4 +72,5 @@ message DeleteUserRequest {
 
 message DeleteUserResponse {
     bool success = 1;
+    string message = 2;
 }

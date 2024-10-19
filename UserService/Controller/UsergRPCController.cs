@@ -11,13 +11,7 @@ namespace UserService.Controller
     {
         public override async Task<CreateUserResponse> CreateUser(CreateUserRequest request, ServerCallContext context)
         {
-            var user = userFactory.CreateUser(
-                request.Login,
-                request.Password,
-                request.Name,
-                request.Surname,
-                request.Age
-            );
+            var user = userFactory.CreateUser(request);
 
             var validationResult = userValidator.Validate(user);
             if (!validationResult.IsValid)
@@ -27,23 +21,28 @@ namespace UserService.Controller
             }
 
             var cancellationToken = context.CancellationToken;
-            var success = await userService.CreateUserAsync(user, cancellationToken);
+            var result = await userService.CreateUser(user, cancellationToken);
 
             return new CreateUserResponse
             {
-                Success = success,
-                Message = success ? "User created successfully" : "User already exists"
+                Success = result.IsSuccess,
+                Message = result.IsSuccess ? "User created successfully" : result.Error
             };
         }
 
         public override async Task<UserResponse> GetUserById(GetUserByIdRequest request, ServerCallContext context)
         {
             var cancellationToken = context.CancellationToken;
-            var user = await userService.GetUserByIdAsync(request.Id, cancellationToken);
-            if (user == null)
+            var result = await userService.GetUserById(request.Id, cancellationToken);
+            if (!result.IsSuccess)
             {
-                throw new RpcException(new Status(StatusCode.NotFound, $"User with ID {request.Id} not found."));
+                return new UserResponse
+                {
+                    Message = result.Error
+                };
             }
+
+            var user = result.Value;
 
             return new UserResponse
             {
@@ -55,22 +54,25 @@ namespace UserService.Controller
                     Name = user.Name,
                     Surname = user.Surname,
                     Age = user.Age
-                }
+                },
+                Message = "Found successfully"
             };
         }
 
         public override async Task<UsersResponse> GetUserByName(GetUserByNameRequest request, ServerCallContext context)
         {
             var cancellationToken = context.CancellationToken;
-            var users = await userService.GetUsersByNameAsync(request.Name, request.Surname, cancellationToken);
-            if (users == null)
+            var result = await userService.GetUsersByName(request.Name, request.Surname, cancellationToken);
+            if (!result.IsSuccess)
             {
-                throw new RpcException(new Status(StatusCode.NotFound,
-                    $"Users with name {request.Name} and surname {request.Surname} not found."));
+                return new UsersResponse
+                {
+                    Message = result.Error
+                };
             }
 
             var response = new UsersResponse();
-            foreach (var user in users)
+            foreach (var user in result.Value)
             {
                 response.Users.Add(new Grpc.User
                 {
@@ -82,6 +84,7 @@ namespace UserService.Controller
                     Age = user.Age
                 });
             }
+            response.Message = "Found successfully";
 
             return response;
         }
@@ -106,26 +109,24 @@ namespace UserService.Controller
             }
 
             var cancellationToken = context.CancellationToken;
-            var success = await userService.UpdateUserAsync(user, cancellationToken);
+            var result = await userService.UpdateUser(user, cancellationToken);
 
             return new UpdateUserResponse
             {
-                Success = success
+                Success = result.IsSuccess,
+                Message = result.IsSuccess ? "User updated successfully" : result.Error
             };
         }
 
         public override async Task<DeleteUserResponse> DeleteUser(DeleteUserRequest request, ServerCallContext context)
         {
             var cancellationToken = context.CancellationToken;
-            var success = await userService.DeleteUserAsync(request.Id, cancellationToken);
-            if (!success)
-            {
-                throw new RpcException(new Status(StatusCode.NotFound, $"User with ID {request.Id} not found."));
-            }
+            var result = await userService.DeleteUser(request.Id, cancellationToken);
 
             return new DeleteUserResponse
             {
-                Success = success
+                Success = result.IsSuccess,
+                Message = result.IsSuccess ? "User deleted successfully" : result.Error
             };
         }
     }

@@ -5,5 +5,5 @@ namespace UserService.Repository.DbModels;
 public interface IUserConverter
 {
     UserDbModel ConvertToDbModel(User user);
-    User ConvertToDomainModel(UserDbModel dbModel);
+    User ConvertToDomainModel(UserDbModel? dbModel);
 }

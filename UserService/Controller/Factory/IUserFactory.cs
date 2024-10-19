@@ -1,9 +1,9 @@
-using UserService.Service.DomainModel;
+using UserService.Grpc;
+using User = UserService.Service.DomainModel.User;
 
 namespace UserService.Controller.Factory;
 
 public interface IUserFactory
 {
-    User CreateUser(int id, string login, string password, string name, string surname, int age);
-    User CreateUser(string login, string password, string name, string surname, int age);
+    User CreateUser(CreateUserRequest request);
 }

@@ -1,9 +1,8 @@
-using UserService.Controller.Factory;
 using UserService.Service.DomainModel;
 
 namespace UserService.Repository.DbModels;
 
-public class UserConverter(IUserFactory userFactory) : IUserConverter
+public class UserConverter : IUserConverter
 {
     public UserDbModel ConvertToDbModel(User user)
     {
@@ -19,7 +18,7 @@ public class UserConverter(IUserFactory userFactory) : IUserConverter
 
     public User ConvertToDomainModel(UserDbModel dbModel)
     {
-        return userFactory.CreateUser(
+        return new User(
             dbModel.Id,
             dbModel.Login, 
             dbModel.Password, 

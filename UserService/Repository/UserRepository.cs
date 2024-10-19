@@ -5,9 +5,10 @@ using UserService.Repository.DbModels;
 
 namespace UserService.Repository
 {
-    public class UserRepository(string connectionString, IUserConverter userConverter) : IUserRepository
+    public class UserRepository
+        (string connectionString, IUserConverter userConverter, ILogger<UserRepository> logger) : IUserRepository
     {
-        public async Task<bool> CreateAsync(User user, CancellationToken cancellationToken)
+        public async Task<Result<bool>> CreateAsync(User user, CancellationToken cancellationToken)
         {
             var dbModel = userConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(connectionString);
@@ -23,15 +24,16 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 await connection.ExecuteAsync(command);
-                return true;
+                return Result<bool>.Success(true);
             }
-            catch (PostgresException)
+            catch (PostgresException ex)
             {
-                return false;
+                logger.LogError(ex, "Error while creating user with Login: {Login}", dbModel.Login);
+                return Result<bool>.Failure(ex.Message);
             }
         }
 
-        public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken)
+        public async Task<Result<User>> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             await using var connection = new NpgsqlConnection(connectionString);
             var query = "SELECT * FROM get_user_by_id(@id)";
@@ -42,15 +44,17 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModel = await connection.QueryFirstOrDefaultAsync<UserDbModel>(command);
-                return dbModel != null ? userConverter.ConvertToDomainModel(dbModel) : null;
+                return Result<User>.Success(userConverter.ConvertToDomainModel(dbModel));
             }
-            catch (PostgresException)
+            catch (PostgresException ex)
             {
-                return null;
+                logger.LogError(ex, "Error while getting user by ID: {Id}", id);
+                return Result<User>.Failure(ex.Message);
             }
         }
 
-        public async Task<IEnumerable<User>?> GetByNameAsync(string name, string surname, CancellationToken cancellationToken)
+        public async Task<Result<List<User>?>> GetByNameAsync(string name, string surname,
+            CancellationToken cancellationToken)
         {
             await using var connection = new NpgsqlConnection(connectionString);
             var query = "SELECT * FROM get_user_by_name(@name, @surname)";
@@ -62,15 +66,17 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModels = await connection.QueryAsync<UserDbModel>(command);
-                return dbModels.Select(userConverter.ConvertToDomainModel);
+                var users = dbModels.Select(userConverter.ConvertToDomainModel).ToList();
+                return Result<List<User>?>.Success(users);
             }
-            catch (PostgresException)
+            catch (PostgresException ex)
             {
-                return null;
+                logger.LogError(ex, "Error while getting users by name: {Name}, {Surname}", name, surname);
+                return Result<List<User>?>.Failure(ex.Message);
             }
         }
 
-        public async Task<bool> UpdateAsync(User user, CancellationToken cancellationToken)
+        public async Task<Result<bool>> UpdateAsync(User user, CancellationToken cancellationToken)
         {
             var dbModel = userConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(connectionString);
@@ -86,15 +92,16 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 await connection.ExecuteAsync(command);
-                return true;
+                return Result<bool>.Success(true);
             }
-            catch (PostgresException)
+            catch (PostgresException ex)
             {
-                return false;
+                logger.LogError(ex, "Error while updating user with ID: {Id}", dbModel.Id);
+                return Result<bool>.Failure(ex.Message);
             }
         }
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+        public async Task<Result<bool>> DeleteAsync(int id, CancellationToken cancellationToken)
         {
             await using var connection = new NpgsqlConnection(connectionString);
             var query = "CALL delete_user(@id)";
@@ -105,11 +112,12 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 await connection.ExecuteAsync(command);
-                return true;
+                return Result<bool>.Success(true);
             }
-            catch (PostgresException)
+            catch (PostgresException ex)
             {
-                return false;
+                logger.LogError(ex, "Error while deleting user with ID: {Id}", id);
+                return Result<bool>.Failure(ex.Message);
             }
         }
     }

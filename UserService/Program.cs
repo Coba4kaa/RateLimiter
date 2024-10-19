@@ -17,7 +17,8 @@ builder.Services.AddSingleton<IUserRepository>(provider =>
 {
     var dbSettings = provider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
     var userConverter = provider.GetRequiredService<IUserConverter>();
-    return new UserRepository(dbSettings.UserServiceDb, userConverter);
+    var logger = provider.GetRequiredService<ILogger<UserRepository>>();
+    return new UserRepository(dbSettings.UserServiceDb, userConverter, logger);
 });
 
 builder.Services.AddTransient<IUserService, UserService.Service.DomainService.UserService>();
