@@ -28,7 +28,7 @@ public class WriterGrpcController : Grpc.Writer.WriterBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, errors));
         }
         var cancellationToken = context.CancellationToken;
-        var success = await _writerService.CreateRateLimitAsync(rateLimit, cancellationToken);
+        var success = await _writerService.CreateRateLimit(rateLimit, cancellationToken);
         return new CreateRateLimitResponse
         {
             Success = success,
@@ -46,7 +46,7 @@ public class WriterGrpcController : Grpc.Writer.WriterBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, errors));
         }
         var cancellationToken = context.CancellationToken;
-        var foundRateLimit = await _writerService.GetRateLimitByRouteAsync(request.Route, cancellationToken);
+        var foundRateLimit = await _writerService.GetRateLimitByRoute(request.Route, cancellationToken);
         if (foundRateLimit == null)
         {
             throw new RpcException(new Status(StatusCode.NotFound, $"Rate limit by route {request.Route} does not exist."));
@@ -72,7 +72,7 @@ public class WriterGrpcController : Grpc.Writer.WriterBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, errors));
         }
         var cancellationToken = context.CancellationToken;
-        var success = await _writerService.UpdateRateLimitAsync(rateLimit, cancellationToken);
+        var success = await _writerService.UpdateRateLimit(rateLimit, cancellationToken);
         return new UpdateRateLimitResponse
         {
             Success = success,
@@ -90,7 +90,7 @@ public class WriterGrpcController : Grpc.Writer.WriterBase
             throw new RpcException(new Status(StatusCode.InvalidArgument, errors));
         }
         var cancellationToken = context.CancellationToken;
-        var success = await _writerService.DeleteRateLimitAsync(request.Route, cancellationToken);
+        var success = await _writerService.DeleteRateLimit(request.Route, cancellationToken);
         return new DeleteRateLimitResponse
         {
             Success = success,
