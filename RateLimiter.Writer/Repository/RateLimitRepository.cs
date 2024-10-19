@@ -19,69 +19,41 @@ public class RateLimitRepository : IRateLimitRepository
     public async Task<bool> CreateAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
         var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
-        try
-        {
-            var existing = await _rateLimitCollection
-                .Find(x => x.Route == rateLimitDbModel.Route)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (existing != null)
-            {
-                return false;
-            }
-            await _rateLimitCollection.InsertOneAsync(rateLimitDbModel, cancellationToken: cancellationToken);
-            return true;
-        }
-        catch (MongoException)
+        var existing = await _rateLimitCollection
+            .Find(x => x.Route == rateLimitDbModel.Route)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (existing != null)
         {
             return false;
         }
+        await _rateLimitCollection.InsertOneAsync(rateLimitDbModel, cancellationToken: cancellationToken);
+        return true;
     }
 
     public async Task<RateLimitDomainModel?> GetByRouteAsync(string route, CancellationToken cancellationToken)
     {
-        try
-        {
-            var filter = Builders<RateLimitDbModel>.Filter.Eq(x => x.Route, route);
-            var rateLimitDbModel = await _rateLimitCollection
-                .Find(filter)
-                .FirstOrDefaultAsync(cancellationToken);
-            
-            return RateLimitMapper.ToDomainModel(rateLimitDbModel);
-        }
-        catch (MongoException)
-        {
-            return null;
-        }
+        var filter = Builders<RateLimitDbModel>.Filter.Eq(x => x.Route, route);
+        var rateLimitDbModel = await _rateLimitCollection
+            .Find(filter)
+            .FirstOrDefaultAsync(cancellationToken);
+        
+        return RateLimitMapper.ToDomainModel(rateLimitDbModel);
     }
 
     public async Task<bool> UpdateAsync(RateLimitDomainModel rateLimitDomainModel, CancellationToken cancellationToken)
     {
         var rateLimitDbModel = RateLimitMapper.ToDbModel(rateLimitDomainModel);
-        try
-        {
-            var updateDefinition = Builders<RateLimitDbModel>.Update
-                .Set(x => x.RequestsPerMinute, rateLimitDbModel.RequestsPerMinute);
-            var result = await _rateLimitCollection.UpdateOneAsync(x => x.Route == rateLimitDbModel.Route,
-                updateDefinition, cancellationToken: cancellationToken);
-            return result.ModifiedCount > 0;
-        }
-        catch (MongoException)
-        {
-            return false;
-        }
+        var updateDefinition = Builders<RateLimitDbModel>.Update
+            .Set(x => x.RequestsPerMinute, rateLimitDbModel.RequestsPerMinute);
+        var result = await _rateLimitCollection.UpdateOneAsync(x => x.Route == rateLimitDbModel.Route,
+            updateDefinition, cancellationToken: cancellationToken);
+        return result.ModifiedCount > 0;
     }
 
     public async Task<bool> DeleteAsync(string route, CancellationToken cancellationToken)
     {
-        try
-        {
-            var filter = Builders<RateLimitDbModel>.Filter.Eq(x => x.Route, route);
-            var result = await _rateLimitCollection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
-            return result.DeletedCount > 0;
-        }
-        catch (MongoException)
-        {
-            return false;
-        }
+        var filter = Builders<RateLimitDbModel>.Filter.Eq(x => x.Route, route);
+        var result = await _rateLimitCollection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
+        return result.DeletedCount > 0;
     }
 }

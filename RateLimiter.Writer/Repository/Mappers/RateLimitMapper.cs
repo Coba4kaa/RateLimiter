@@ -7,6 +7,6 @@ using Riok.Mapperly.Abstractions;
 
 [Mapper]
 public static partial class RateLimitMapper {
-    public static partial RateLimitDbModel? ToDbModel(RateLimitDomainModel? rateLimitDomainModel);
+    public static partial RateLimitDbModel ToDbModel(RateLimitDomainModel rateLimitDomainModel);
     public static partial RateLimitDomainModel? ToDomainModel(RateLimitDbModel? rateLimitDbModel);
 }
