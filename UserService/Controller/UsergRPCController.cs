@@ -7,11 +7,11 @@ using User = UserService.Service.DomainModel.User;
 
 namespace UserService.Controller
 {
-    public class UsergRpcController(IUserService userService, IValidator<User> userValidator, IUserFactory userFactory) : Grpc.UserService.UserServiceBase
+    public class UsergRpcController(IUserService userService, IValidator<User> userValidator, IUserDomainControllerConverter userDomainControllerConverter) : Grpc.UserService.UserServiceBase
     {
         public override async Task<CreateUserResponse> CreateUser(CreateUserRequest request, ServerCallContext context)
         {
-            var user = userFactory.CreateUser(request);
+            var user = userDomainControllerConverter.ConvertToDomainModel(request);
 
             var validationResult = userValidator.Validate(user);
             if (!validationResult.IsValid)
@@ -74,15 +74,7 @@ namespace UserService.Controller
             var response = new UsersResponse();
             foreach (var user in result.Value)
             {
-                response.Users.Add(new Grpc.User
-                {
-                    Id = user.Id,
-                    Login = user.Login,
-                    Password = user.Password,
-                    Name = user.Name,
-                    Surname = user.Surname,
-                    Age = user.Age
-                });
+                response.Users.Add(userDomainControllerConverter.ConvertToControllerModel(user));
             }
             response.Message = "Found successfully";
 

@@ -2,7 +2,7 @@ using UserService.Service.DomainModel;
 
 namespace UserService.Repository.DbModels;
 
-public class UserConverter : IUserConverter
+public class UserDomainDbConverter : IUserDomainDbConverter
 {
     public UserDbModel ConvertToDbModel(User user)
     {
