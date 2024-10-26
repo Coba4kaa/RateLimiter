@@ -8,7 +8,7 @@ using FluentValidation;
 
 public class RateLimitValidator : AbstractValidator<RateLimitDomainModel>
 {
-    private readonly Regex _routePattern = new Regex(@"^(writer\.Writer|user\.UserService)/(CreateUser|GetUserById|GetUserByName|UpdateUser|DeleteUser|)$", RegexOptions.IgnoreCase);
+    private readonly Regex _routePattern = new Regex(@"^(((http|https|grpc|ws|wss)://)?(localhost|\d{1,3}(\.\d{1,3}){3}):\d{2,5})?/?(\w+\.\w+)/(Create|Get|Update|Delete)\w*$", RegexOptions.IgnoreCase);
     public RateLimitValidator()
     {
         RuleFor(rateLimit => rateLimit.Route)
