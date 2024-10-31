@@ -5,6 +5,6 @@ namespace RateLimiter.Reader.Service.DomainServices
 {
     public interface IRateLimitService
     {
-        public Collection<RateLimitDomainModel> GetCurrentRateLimits();
+        public IReadOnlyCollection<RateLimitDomainModel> GetCurrentRateLimits();
     }
 }

@@ -70,8 +70,8 @@ namespace RateLimiter.Reader.Repository
             return new Collection<RateLimitDomainModel>(_rateLimits.Values.ToList());
         }
 
-        
-        public void EnqueueRateLimitChange(ChangeStreamDocument<RateLimitDbModel> change)
+
+        private void EnqueueRateLimitChange(ChangeStreamDocument<RateLimitDbModel> change)
         {
             _changeQueue.Enqueue(() => ApplyRateLimitChange(change));
         }
