@@ -1,11 +1,15 @@
+using RateLimiter.Reader.Service.DomainServices;
+
 namespace RateLimiter.Reader.Repository
 {
-    public class RateLimitHostedService(IRateLimitRepository rateLimitRepository) : IHostedService
+    public class RateLimitHostedService(IRateLimitService rateLimitService, IRateLimitRepository rateLimitRepository)
+        : IHostedService
     {
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            rateLimitRepository.StartProcessingEvents();
-            return Task.CompletedTask;
+            await rateLimitService.InitializeRateLimitsAsync();
+            var changes = rateLimitRepository.WatchRateLimitChangesAsync();
+            _ = Task.Run(() => rateLimitService.ProcessRateLimitChangesAsync(changes), cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
