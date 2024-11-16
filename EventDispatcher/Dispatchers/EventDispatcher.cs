@@ -1,86 +1,111 @@
 using System.Collections.Concurrent;
 using Confluent.Kafka;
 using EventDispatcher.Events;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-
-namespace EventDispatcher.Dispatchers;
-
-public class EventDispatcher : IDisposable
+namespace EventDispatcher.Dispatchers
 {
-    private readonly IProducer<Null, string> _producer;
-    private readonly ConcurrentDictionary<int, UserEventConfig> _userEvents = new();
-
-    public EventDispatcher(string kafkaBootstrapServers)
+    public class EventDispatcher : IDisposable
     {
-        var config = new ProducerConfig { BootstrapServers = kafkaBootstrapServers};
-        _producer = new ProducerBuilder<Null, string>(config).Build();
-    }
+        private readonly IProducer<Null, string> _producer;
+        private readonly ConcurrentDictionary<(int, string), UserEventConfig> _userEvents = new();
+        private readonly ConcurrentDictionary<(int, string), CancellationTokenSource> _activeUserTasks = new();
+        private readonly string _topicName;
 
-    public void ConfigureEvent(int userId, string endpoint, int rpm)
-    {
-        var userEvent = new UserEventPayload(userId, endpoint);
-        var userEventConfig = new UserEventConfig(userEvent, rpm);
-        _userEvents[userId] = userEventConfig;
-        
-    }
-
-    public async Task StartBatchProcessing(CancellationToken stoppingToken)
-    {
-        var activeUserTasks = new ConcurrentDictionary<int, Task>();
-
-        while (!stoppingToken.IsCancellationRequested)
+        public EventDispatcher(IOptions<KafkaSettings> kafkaSettings)
         {
-            foreach (var userEventConfig in _userEvents)
+            var config = kafkaSettings.Value;
+
+            if (string.IsNullOrEmpty(config.BootstrapServers))
+                throw new ArgumentException("Kafka BootstrapServers is not configured.");
+
+            if (string.IsNullOrEmpty(config.TopicName))
+                throw new ArgumentException("Kafka TopicName is not configured.");
+
+            _topicName = config.TopicName;
+
+            var producerConfig = new ProducerConfig { BootstrapServers = config.BootstrapServers };
+            _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+        }
+
+        public void ConfigureEvent(int userId, string endpoint, int rpm)
+        {
+            var key = (userId, endpoint);
+            RemoveExistingTask(key);
+
+            var userEvent = new UserEventPayload(userId, endpoint);
+            var userEventConfig = new UserEventConfig(userEvent, rpm);
+
+            _userEvents[key] = userEventConfig;
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            Task.Run(() => StartSending(key, cancellationTokenSource.Token), cancellationTokenSource.Token);
+            _activeUserTasks[key] = cancellationTokenSource;
+        }
+
+        public void ChangeRoute(int userId, string oldEndpoint, string newEndpoint)
+        {
+            var oldKey = (userId, oldEndpoint);
+            if (!_userEvents.TryGetValue(oldKey, out var userEventConfig))
             {
-                var userId = userEventConfig.Key;
-                
-                if (!activeUserTasks.ContainsKey(userId))
-                {
-                    var task = Task.Run(() => StartSending(userId, stoppingToken), stoppingToken);
-                    activeUserTasks[userId] = task;
-                }
+                Console.WriteLine($"Old route not found for user {userId} and endpoint {oldEndpoint}");
+                return;
             }
-            
-            await Task.Delay(5000, stoppingToken);
-            
-            foreach (var (userId, task) in activeUserTasks)
-            {
-                if (task.IsCompleted)
-                {
-                    activeUserTasks.TryRemove(userId, out _);
-                }
-            }
+
+            var rpm = userEventConfig.Rpm;
+            RemoveExistingTask(oldKey);
+            ConfigureEvent(userId, newEndpoint, rpm);
         }
         
-        await Task.WhenAll(activeUserTasks.Values);
-    }
-
-    private async Task StartSending(int userId, CancellationToken stoppingToken)
-    {
-        if (!_userEvents.TryGetValue(userId, out var eventConfig)) return;
-        var delay = 60000 / eventConfig.Rpm;
-        while (!stoppingToken.IsCancellationRequested)
+        private void RemoveExistingTask((int, string) key)
         {
-            var jsonMessage = JsonConvert.SerializeObject(eventConfig.UserEvent);
-            try
+            if (_activeUserTasks.TryRemove(key, out var cts))
             {
-                var deliveryResult =
-                    await _producer.ProduceAsync("events", new Message<Null, string> { Value = jsonMessage });
+                cts.Cancel();
+            }
+            _userEvents.TryRemove(key, out _);
+        }
+
+        private async Task StartSending((int, string) key, CancellationToken stoppingToken)
+        {
+            if (!_userEvents.TryGetValue(key, out var eventConfig)) return;
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var jsonMessage = JsonConvert.SerializeObject(eventConfig.UserEvent);
+                try
+                {
+                    await _producer.ProduceAsync(_topicName, new Message<Null, string> { Value = jsonMessage },
+                        stoppingToken);
+                }
+                catch (ProduceException<Null, string> e)
+                {
+                    Console.WriteLine("Error sending message: {0}", e.Error.Reason);
+                }
+
+                await Task.Delay(60000 / eventConfig.Rpm, stoppingToken);
+            }
+        }
+
+        public async Task StartBatchProcessing(CancellationToken stoppingToken)
+        {
+            foreach (var key in _userEvents.Keys)
+            {
+                if (_activeUserTasks.ContainsKey(key)) continue;
+
+                var cancellationTokenSource = new CancellationTokenSource();
+                await Task.Run(() => StartSending(key, cancellationTokenSource.Token), cancellationTokenSource.Token);
+                _activeUserTasks[key] = cancellationTokenSource;
             }
 
-            catch (ProduceException<Null, string> e)
-            {
-                Console.WriteLine("Error sending message: {0}", e.Error.Reason);
-            }
-            
-            await Task.Delay(delay, stoppingToken);
+            await Task.Delay(Timeout.Infinite, stoppingToken);
         }
-    }
-    
-    public void Dispose()
-    {
-        _producer?.Dispose();
-        GC.SuppressFinalize(this);
+
+        public void Dispose()
+        {
+            _producer.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }
