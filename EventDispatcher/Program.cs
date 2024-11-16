@@ -3,6 +3,8 @@ using EventDispatcher.Dispatchers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+var cts = new CancellationTokenSource();
+
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
@@ -17,20 +19,30 @@ var eventDispatcher = host.Services.GetRequiredService<EventDispatcher.Dispatche
 eventDispatcher.ConfigureEvent(123, "v1.0/users/getById", 10);
 eventDispatcher.ConfigureEvent(123, "v1.0/users/getByName", 30);
 
+var hostTask = host.RunAsync(cts.Token);
+
 while (true)
 {
-    Console.WriteLine("Enter command (add/update id route rpm | changeroute id oldroute newroute): ");
+    Console.WriteLine("Enter command (add/update id route rpm | changeroute id oldroute newroute | exit): ");
     var command = Console.ReadLine();
     var parts = command?.Split(' ');
 
-    if (parts == null || parts.Length < 3)
+    if (parts == null)
     {
         Console.WriteLine("Invalid command format.");
         continue;
     }
 
     var action = parts[0].ToLower();
-    if (!int.TryParse(parts[1], out var userId))
+    if (action == "exit")
+    {
+        Console.WriteLine("Exiting...");
+        cts.Cancel();
+        await host.StopAsync();
+        break;
+    }
+
+    if (parts.Length < 2 || !int.TryParse(parts[1], out var userId))
     {
         Console.WriteLine("Invalid user ID format.");
         continue;
@@ -60,7 +72,7 @@ while (true)
                 break;
             }
 
-            route = parts[2]; 
+            route = parts[2];
             eventDispatcher.ConfigureEvent(userId, route, rpm);
             Console.WriteLine($"User {userId} updated with route {route} and RPM {rpm}");
             break;
@@ -78,11 +90,12 @@ while (true)
 
             if (routeChanged)
                 Console.WriteLine($"User {userId}'s route changed from {oldRoute} to {newRoute}");
-            
             break;
 
         default:
-            Console.WriteLine("Invalid action. Use 'add', 'update', or 'changeroute'.");
+            Console.WriteLine("Invalid action. Use 'add', 'update', 'changeroute' or 'exit'.");
             break;
     }
 }
+
+await hostTask;

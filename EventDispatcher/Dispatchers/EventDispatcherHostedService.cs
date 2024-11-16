@@ -8,4 +8,11 @@ public class EventDispatcherHostedService(EventDispatcher eventDispatcher) : Bac
     {
         await eventDispatcher.StartBatchProcessing(stoppingToken);
     }
+
+    public override void Dispose()
+    {
+        eventDispatcher.Dispose();
+        GC.SuppressFinalize(this);
+        base.Dispose();
+    }
 }

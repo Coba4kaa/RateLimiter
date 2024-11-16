@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Confluent.Kafka;
 using EventDispatcher.Events;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace EventDispatcher.Dispatchers
 {
@@ -80,7 +80,7 @@ namespace EventDispatcher.Dispatchers
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                var jsonMessage = JsonConvert.SerializeObject(eventConfig.UserEvent);
+                var jsonMessage = JsonSerializer.Serialize(eventConfig.UserEvent);
                 try
                 {
                     await _producer.ProduceAsync(_topicName, new Message<Null, string> { Value = jsonMessage },
@@ -111,6 +111,17 @@ namespace EventDispatcher.Dispatchers
 
         public void Dispose()
         {
+            
+            foreach (var cts in _activeUserTasks.Values)
+            {
+                cts.Cancel();
+            }
+            
+            foreach (var key in _userEvents.Keys.ToList())
+            {
+                RemoveExistingTask(key);
+            }
+
             _producer.Dispose();
             GC.SuppressFinalize(this);
         }
