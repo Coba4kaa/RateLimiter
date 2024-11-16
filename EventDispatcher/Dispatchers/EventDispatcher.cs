@@ -44,18 +44,25 @@ namespace EventDispatcher.Dispatchers
             _activeUserTasks[key] = cancellationTokenSource;
         }
 
-        public void ChangeRoute(int userId, string oldEndpoint, string newEndpoint)
+        public bool ChangeRoute(int userId, string oldEndpoint, string newEndpoint)
         {
+            if (oldEndpoint.Equals(newEndpoint, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"No route change needed for user {userId}. The endpoint '{newEndpoint}' is the same as the current one.");
+                return false;
+            }
+
             var oldKey = (userId, oldEndpoint);
             if (!_userEvents.TryGetValue(oldKey, out var userEventConfig))
             {
                 Console.WriteLine($"Old route not found for user {userId} and endpoint {oldEndpoint}");
-                return;
+                return false;
             }
 
             var rpm = userEventConfig.Rpm;
             RemoveExistingTask(oldKey);
             ConfigureEvent(userId, newEndpoint, rpm);
+            return true;
         }
         
         private void RemoveExistingTask((int, string) key)

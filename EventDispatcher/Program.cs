@@ -74,8 +74,11 @@ while (true)
 
             var oldRoute = parts[2];
             var newRoute = parts[3];
-            eventDispatcher.ChangeRoute(userId, oldRoute, newRoute);
-            Console.WriteLine($"User {userId}'s route changed from {oldRoute} to {newRoute}");
+            var routeChanged = eventDispatcher.ChangeRoute(userId, oldRoute, newRoute);
+
+            if (routeChanged)
+                Console.WriteLine($"User {userId}'s route changed from {oldRoute} to {newRoute}");
+            
             break;
 
         default:
