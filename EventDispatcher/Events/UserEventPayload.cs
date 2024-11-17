@@ -1,7 +1,19 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
-namespace EventDispatcher.Events;
+namespace EventDispatcher.Events
+{
+    public record UserEventPayload
+    {
+        [JsonPropertyName("user_id")]
+        public int UserId { get; init; }
 
-public record UserEventPayload(
-    [property: JsonProperty("user_id")] int UserId, 
-    [property: JsonProperty("endpoint")] string Endpoint);
+        [JsonPropertyName("endpoint")]
+        public string Endpoint { get; init; }
+
+        public UserEventPayload(int userId, string endpoint)
+        {
+            UserId = userId;
+            Endpoint = endpoint;
+        }
+    }
+}

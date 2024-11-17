@@ -111,19 +111,13 @@ namespace EventDispatcher.Dispatchers
 
         public void Dispose()
         {
-            
             foreach (var cts in _activeUserTasks.Values)
             {
                 cts.Cancel();
             }
-            
-            foreach (var key in _userEvents.Keys.ToList())
-            {
-                RemoveExistingTask(key);
-            }
-
             _producer.Dispose();
-            GC.SuppressFinalize(this);
+            _activeUserTasks.Clear();
+            _userEvents.Clear();
         }
     }
 }
