@@ -16,9 +16,6 @@ var host = Host.CreateDefaultBuilder(args)
 
 var eventDispatcher = host.Services.GetRequiredService<EventDispatcher.Dispatchers.EventDispatcher>();
 
-eventDispatcher.ConfigureEvent(123, "v1.0/users/getById", 10);
-eventDispatcher.ConfigureEvent(123, "v1.0/users/getByName", 30);
-
 var hostTask = host.RunAsync(cts.Token);
 
 while (true)

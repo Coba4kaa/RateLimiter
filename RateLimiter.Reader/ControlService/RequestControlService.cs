@@ -82,7 +82,7 @@ public class RequestControlService : IRequestControlService
 
         }
         
-        await _redisDb.StringSetAsync(endpointRateLimitKey, endpointRateLimit);
+        await _redisDb.StringSetAsync(endpointRateLimitKey, endpointRateLimit, TimeSpan.FromMinutes(10));
     }
     
     private async Task InitializeAsync()
