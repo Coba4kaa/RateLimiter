@@ -75,7 +75,7 @@ public class RequestControlService : IRequestControlService
             await _redisDb.KeyExpireAsync(redisKey, _counterDuration);
         }
 
-        if (currentCount > endpointRateLimit)
+        if (currentCount >= endpointRateLimit)
         {
             await _redisDb.StringSetAsync(exceededKey, 1, _blockDuration);
             await _redisDb.KeyDeleteAsync(redisKey);
