@@ -64,8 +64,8 @@ public class KafkaConsumerService : IDisposable
                 return;
             }
 
-            int userId = jsonMessage["user_id"].GetInt32();
-            string endpoint = jsonMessage["endpoint"].GetString() ?? string.Empty;
+            var userId = jsonMessage["user_id"].GetInt32();
+            var endpoint = jsonMessage["endpoint"].GetString() ?? string.Empty;
             if (string.IsNullOrEmpty(endpoint))
             {
                 Console.WriteLine("Invalid message endpoint, can't handle request.");

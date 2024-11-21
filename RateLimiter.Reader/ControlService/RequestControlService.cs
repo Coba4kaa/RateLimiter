@@ -52,11 +52,21 @@ public class RequestControlService : IRequestControlService
         var endpointRateLimit = endpointRateLimitModel.RequestsPerMinute;
         var redisKey = $"endpoint_request:{userId}:{endpoint}";
         var exceededKey = $"has_exceeded_rpm:{userId}:{endpoint}";
+        var endpointRateLimitKey = $"old_rate_limit:{endpoint}";
+        var oldRateLimit = await _redisDb.StringGetAsync(endpointRateLimitKey);
         var isBlocked = await _redisDb.KeyExistsAsync(exceededKey);
         if (isBlocked)
         {
             Console.WriteLine($"Rate limit exceeded for UserID: {userId}, Endpoint: {endpoint}. Access blocked.");
             return;
+        }
+
+        if (oldRateLimit.HasValue && oldRateLimit != endpointRateLimit)
+        {
+            await _redisDb.StringSetAsync(redisKey, 1, _counterDuration);
+            await _redisDb.StringSetAsync(endpointRateLimitKey, endpointRateLimit);
+            return;
+            
         }
         
         var currentCount = await _redisDb.StringIncrementAsync(redisKey);
@@ -68,7 +78,11 @@ public class RequestControlService : IRequestControlService
         if (currentCount > endpointRateLimit)
         {
             await _redisDb.StringSetAsync(exceededKey, 1, _blockDuration);
+            await _redisDb.KeyDeleteAsync(redisKey);
+
         }
+        
+        await _redisDb.StringSetAsync(endpointRateLimitKey, endpointRateLimit);
     }
     
     private async Task InitializeAsync()
