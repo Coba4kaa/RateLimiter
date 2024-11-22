@@ -13,6 +13,7 @@ builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafk
 builder.Services.AddSingleton<IRateLimitRepository, RateLimitRepository>();
 builder.Services.AddSingleton<IRateLimitService, RateLimitService>();
 builder.Services.AddHostedService<RateLimitHostedService>();
+builder.Services.AddHostedService<RequestControlHostedService>();
 builder.Services.AddHostedService<KafkaConsumerHostedService>();
 builder.Services.AddSingleton<KafkaConsumerService>();
 builder.Services.AddSingleton<IRequestControlService, RequestControlService>();

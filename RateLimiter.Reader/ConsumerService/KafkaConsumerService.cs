@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 using Microsoft.Extensions.Options;
 using RateLimiter.Reader.ControlService;
-using System.Text.Json;
+using RateLimiter.Reader.ConsumerService.Mappers;
 
 
 namespace RateLimiter.Reader.ConsumerService;
@@ -57,23 +57,22 @@ public class KafkaConsumerService : IDisposable
     {
         try
         {
-            var jsonMessage = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(message);
-            if (jsonMessage is null || !jsonMessage.ContainsKey("user_id") || !jsonMessage.ContainsKey("endpoint"))
+            var messageModel = MessageMapper.FromJsonToModel(message);
+            if (messageModel == null)
             {
-                Console.WriteLine("Invalid message format, can't handle request.");
+                Console.WriteLine($"Invalid message format, can't handle request.");
+                return;
+            }
+            var userId = messageModel.UserId;
+            var route = messageModel.Route;
+            if (string.IsNullOrEmpty(route))
+            {
+                Console.WriteLine("Invalid message route, can't handle request.");
                 return;
             }
 
-            var userId = jsonMessage["user_id"].GetInt32();
-            var endpoint = jsonMessage["endpoint"].GetString() ?? string.Empty;
-            if (string.IsNullOrEmpty(endpoint))
-            {
-                Console.WriteLine("Invalid message endpoint, can't handle request.");
-                return;
-            }
-
-            Console.WriteLine($"Received request for {endpoint} from user {userId}");
-            await _requestControlService.ProcessRequestAsync(userId, endpoint);
+            Console.WriteLine($"Received request for {route} from user {userId}");
+            await _requestControlService.ProcessRequestAsync(messageModel);
         }
 
         catch (Exception e)

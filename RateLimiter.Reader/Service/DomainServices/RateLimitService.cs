@@ -22,6 +22,11 @@ namespace RateLimiter.Reader.Service.DomainServices
             return new ReadOnlyCollection<RateLimitDomainModel>(_rateLimits.Values.ToList());
         }
 
+        public RateLimitDomainModel? FindRateLimitForRoute(string route)
+        {
+            return _rateLimits.FirstOrDefault(r => r.Value.Route == route).Value;
+        }
+
         public async Task ProcessRateLimitChangesAsync(IAsyncEnumerable<ChangeStreamDocument<RateLimitDbModel>> changes)
         {
             await foreach (var change in changes)

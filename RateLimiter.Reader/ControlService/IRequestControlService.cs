@@ -1,6 +1,9 @@
+using RateLimiter.Reader.ConsumerService.Models;
+
 namespace RateLimiter.Reader.ControlService;
 
-public interface IRequestControlService
+public interface IRequestControlService : IDisposable
 {
-    public Task ProcessRequestAsync(int userId, string endpoint);
+    public Task InitializeAsync(CancellationToken cancellationToken);
+    public Task ProcessRequestAsync(MessageModel messageModel);
 }
