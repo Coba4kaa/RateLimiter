@@ -38,16 +38,16 @@ public class RequestControlService : IRequestControlService, IDisposable
         var routeRateLimitModel = _rateLimitService.FindRateLimitForRoute(route);
         if (routeRateLimitModel is null)
         {
-            Console.WriteLine($"Current route {route} has no rate limit. User request allowed freely.");
+            Console.WriteLine($"Current route {route} has no rate limit. User {userId} request allowed freely.");
             return;
         }
         var routeRateLimit = routeRateLimitModel.RequestsPerMinute;
         var redisKey = $"route_request:{userId}:{route}";
-        var exceededKey = $"has_reached_rpm:{userId}:{route}";
+        var exceededKey = $"has_exceeded_rpm:{userId}:{route}";
         var isBlocked = await _redisDb.KeyExistsAsync(exceededKey);
         if (isBlocked)
         {
-            Console.WriteLine($"Rate limit exceeded for UserID: {userId}, Route: {route}. Access blocked.");
+            Console.WriteLine($"User {userId} is in timeout for route {route}. Access blocked.");
             return;
         }
         
@@ -57,10 +57,11 @@ public class RequestControlService : IRequestControlService, IDisposable
             await _redisDb.KeyExpireAsync(redisKey, _counterDuration);
         }
 
-        if (currentCount >= routeRateLimit)
+        if (currentCount > routeRateLimit)
         {
             await _redisDb.StringSetAsync(exceededKey, 1, _blockDuration);
             await _redisDb.KeyDeleteAsync(redisKey);
+            Console.WriteLine($"Rate limit exceeded for UserID: {userId}, Route: {route}. Access blocked.");
         }
     }
     
