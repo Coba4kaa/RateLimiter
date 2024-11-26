@@ -7,14 +7,12 @@ public static class MessageMapper
 {
     public static MessageModel? FromJsonToModel(string message)
     {
-        var jsonMessage = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(message);
-        if (jsonMessage is null || !jsonMessage.ContainsKey("user_id") || !jsonMessage.ContainsKey("endpoint"))
+        var jsonMessage = JsonSerializer.Deserialize<MessageModel>(message);
+        if (jsonMessage is null || string.IsNullOrEmpty(jsonMessage.Route))
         {
             return null;
         }
-
-        var userId = jsonMessage["user_id"].GetInt32();
-        var route = jsonMessage["endpoint"].GetString() ?? string.Empty;
-        return new MessageModel(userId, route);
+        
+        return jsonMessage;
     }
 }

@@ -5,7 +5,7 @@ using StackExchange.Redis;
 
 namespace RateLimiter.Reader.ControlService;
 
-public class RequestControlService : IRequestControlService
+public class RequestControlService : IRequestControlService, IDisposable
 {
     private IDatabase? _redisDb;
     private ConnectionMultiplexer? _redisConnection;
@@ -43,7 +43,7 @@ public class RequestControlService : IRequestControlService
         }
         var routeRateLimit = routeRateLimitModel.RequestsPerMinute;
         var redisKey = $"route_request:{userId}:{route}";
-        var exceededKey = $"has_exceeded_rpm:{userId}:{route}";
+        var exceededKey = $"has_reached_rpm:{userId}:{route}";
         var isBlocked = await _redisDb.KeyExistsAsync(exceededKey);
         if (isBlocked)
         {
@@ -61,7 +61,6 @@ public class RequestControlService : IRequestControlService
         {
             await _redisDb.StringSetAsync(exceededKey, 1, _blockDuration);
             await _redisDb.KeyDeleteAsync(redisKey);
-
         }
     }
     

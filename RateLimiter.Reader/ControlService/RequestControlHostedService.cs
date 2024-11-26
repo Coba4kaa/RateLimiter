@@ -1,17 +1,17 @@
 namespace RateLimiter.Reader.ControlService;
 
-public class RequestControlHostedService(IRequestControlService requestControlService) : BackgroundService
+public class RequestControlHostedService(IRequestControlService requestControlService) : IHostedService
 {
-    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         Console.WriteLine("Redis initializing...");
         await requestControlService.InitializeAsync(cancellationToken);
         Console.WriteLine("Redis initialized.");
     }
-    
-    public override void Dispose()
+
+    public Task StopAsync(CancellationToken cancellationToken)
     {
-        requestControlService.Dispose();
-        base.Dispose();
+        Console.WriteLine("Stopping hosted service...");
+        return Task.CompletedTask;
     }
 }
