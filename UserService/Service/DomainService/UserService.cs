@@ -36,6 +36,10 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
         {
             userResult.Result.Value.ForEach(user =>
             {
+                if (memoryCache.TryGetValue(user.Id, out _))
+                {
+                    return;
+                }
                 memoryCache.Set(user.Id, user, TimeSpan.FromMinutes(10));
                 Console.WriteLine($"{user.Id} now in memory cache.");
             });

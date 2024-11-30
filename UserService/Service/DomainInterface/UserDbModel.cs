@@ -1,6 +1,6 @@
 namespace UserService.Service.DomainInterface;
 
-public record UserModel : IUser
+public record UserDbModel : IUser
 {
     public int Id { get; init; }
     public string Login { get; init; }
