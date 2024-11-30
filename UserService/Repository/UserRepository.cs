@@ -1,27 +1,25 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using UserService.Repository.DbModels;
 using UserService.Service.DomainInterface;
 
 namespace UserService.Repository
 {
     public class UserRepository
-        (IOptions<DatabaseSettings> dbSettings, IUserDbConverter userDbConverter, ILogger<UserRepository> logger) : IUserRepository
+        (IOptions<DatabaseSettings> dbSettings, ILogger<UserRepository> logger) : IUserRepository
     {
         private readonly string _connectionString = dbSettings.Value.UserServiceDb;
         
         public async Task<Result<bool>> CreateAsync(IUser user, CancellationToken cancellationToken)
         {
-            var dbModel = userDbConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(_connectionString);
             var query = "CALL create_user(@login, @password, @name, @surname, @age)";
             var parameters = new DynamicParameters();
-            parameters.Add("login", dbModel.Login);
-            parameters.Add("password", dbModel.Password);
-            parameters.Add("name", dbModel.Name);
-            parameters.Add("surname", dbModel.Surname);
-            parameters.Add("age", dbModel.Age);
+            parameters.Add("login", user.Login);
+            parameters.Add("password", user.Password);
+            parameters.Add("name", user.Name);
+            parameters.Add("surname", user.Surname);
+            parameters.Add("age", user.Age);
 
             try
             {
@@ -31,7 +29,7 @@ namespace UserService.Repository
             }
             catch (PostgresException ex)
             {
-                logger.LogError(ex, "Error while creating user with Login: {Login}", dbModel.Login);
+                logger.LogError(ex, "Error while creating user with Login: {Login}", user.Login);
                 return Result<bool>.Failure(ex.Message);
             }
         }
@@ -47,7 +45,7 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModel = await connection.QueryFirstOrDefaultAsync<UserDbModel>(command);
-                return dbModel == null ? Result<IUser>.Failure($"User with ID {id} not found") : Result<IUser>.Success(userDbConverter.ConvertToUserModel(dbModel));
+                return dbModel == null ? Result<IUser>.Failure($"User with ID {id} not found") : Result<IUser>.Success(dbModel);
             }
             catch (PostgresException ex)
             {
@@ -69,8 +67,8 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModels = await connection.QueryAsync<UserDbModel>(command);
-                var users = dbModels.Select(userDbConverter.ConvertToUserModel).ToList();
-                return users.Count == 0 ? Result<List<IUser>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<IUser>?>.Success(users);
+                var users = dbModels.ToList();
+                return users.Count == 0 ? Result<List<IUser>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<IUser>?>.Success(users.OfType<IUser>().ToList());
             }
             catch (PostgresException ex)
             {
@@ -81,15 +79,14 @@ namespace UserService.Repository
 
         public async Task<Result<bool>> UpdateAsync(IUser user, CancellationToken cancellationToken)
         {
-            var dbModel = userDbConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(_connectionString);
             var query = "CALL update_user(@id, @password, @name, @surname, @age)";
             var parameters = new DynamicParameters();
-            parameters.Add("id", dbModel.Id);
-            parameters.Add("password", dbModel.Password);
-            parameters.Add("name", dbModel.Name);
-            parameters.Add("surname", dbModel.Surname);
-            parameters.Add("age", dbModel.Age);
+            parameters.Add("id", user.Id);
+            parameters.Add("password", user.Password);
+            parameters.Add("name", user.Name);
+            parameters.Add("surname", user.Surname);
+            parameters.Add("age", user.Age);
 
             try
             {
@@ -99,7 +96,7 @@ namespace UserService.Repository
             }
             catch (PostgresException ex)
             {
-                logger.LogError(ex, "Error while updating user with ID: {Id}", dbModel.Id);
+                logger.LogError(ex, "Error while updating user with ID: {Id}", user.Id);
                 return Result<bool>.Failure(ex.Message);
             }
         }
