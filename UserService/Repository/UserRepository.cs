@@ -1,19 +1,19 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using UserService.Service.DomainModel;
 using UserService.Repository.DbModels;
+using UserService.Service.DomainInterface;
 
 namespace UserService.Repository
 {
     public class UserRepository
-        (IOptions<DatabaseSettings> dbSettings, IUserDomainDbConverter userDomainDbConverter, ILogger<UserRepository> logger) : IUserRepository
+        (IOptions<DatabaseSettings> dbSettings, IUserDbConverter userDbConverter, ILogger<UserRepository> logger) : IUserRepository
     {
         private readonly string _connectionString = dbSettings.Value.UserServiceDb;
         
-        public async Task<Result<bool>> CreateAsync(User user, CancellationToken cancellationToken)
+        public async Task<Result<bool>> CreateAsync(IUser user, CancellationToken cancellationToken)
         {
-            var dbModel = userDomainDbConverter.ConvertToDbModel(user);
+            var dbModel = userDbConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(_connectionString);
             var query = "CALL create_user(@login, @password, @name, @surname, @age)";
             var parameters = new DynamicParameters();
@@ -36,7 +36,7 @@ namespace UserService.Repository
             }
         }
 
-        public async Task<Result<User>> GetByIdAsync(int id, CancellationToken cancellationToken)
+        public async Task<Result<IUser>> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             await using var connection = new NpgsqlConnection(_connectionString);
             var query = "SELECT * FROM get_user_by_id(@id)";
@@ -47,16 +47,16 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModel = await connection.QueryFirstOrDefaultAsync<UserDbModel>(command);
-                return dbModel == null ? Result<User>.Failure($"User with ID {id} not found") : Result<User>.Success(userDomainDbConverter.ConvertToDomainModel(dbModel));
+                return dbModel == null ? Result<IUser>.Failure($"User with ID {id} not found") : Result<IUser>.Success(userDbConverter.ConvertToUserModel(dbModel));
             }
             catch (PostgresException ex)
             {
                 logger.LogError(ex, "Error while getting user by ID: {Id}", id);
-                return Result<User>.Failure(ex.Message);
+                return Result<IUser>.Failure(ex.Message);
             }
         }
 
-        public async Task<Result<List<User>?>> GetByNameAsync(string name, string surname,
+        public async Task<Result<List<IUser>?>> GetByNameAsync(string name, string surname,
             CancellationToken cancellationToken)
         {
             await using var connection = new NpgsqlConnection(_connectionString);
@@ -69,19 +69,19 @@ namespace UserService.Repository
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
                 var dbModels = await connection.QueryAsync<UserDbModel>(command);
-                var users = dbModels.Select(userDomainDbConverter.ConvertToDomainModel).ToList();
-                return users.Count == 0 ? Result<List<User>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<User>?>.Success(users);
+                var users = dbModels.Select(userDbConverter.ConvertToUserModel).ToList();
+                return users.Count == 0 ? Result<List<IUser>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<IUser>?>.Success(users);
             }
             catch (PostgresException ex)
             {
                 logger.LogError(ex, "Error while getting users by name: {Name}, {Surname}", name, surname);
-                return Result<List<User>?>.Failure(ex.Message);
+                return Result<List<IUser>?>.Failure(ex.Message);
             }
         }
 
-        public async Task<Result<bool>> UpdateAsync(User user, CancellationToken cancellationToken)
+        public async Task<Result<bool>> UpdateAsync(IUser user, CancellationToken cancellationToken)
         {
-            var dbModel = userDomainDbConverter.ConvertToDbModel(user);
+            var dbModel = userDbConverter.ConvertToDbModel(user);
             await using var connection = new NpgsqlConnection(_connectionString);
             var query = "CALL update_user(@id, @password, @name, @surname, @age)";
             var parameters = new DynamicParameters();
