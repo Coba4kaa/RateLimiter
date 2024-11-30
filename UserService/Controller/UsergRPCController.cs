@@ -1,21 +1,21 @@
 using Grpc.Core;
 using UserService.Grpc;
 using FluentValidation;
-using UserService.Controller.Factory;
-using UserService.Service.DomainService.interfaces;
-using User = UserService.Service.DomainModel.User;
+using UserService.Controller.Converter;
+using UserService.Service.DomainInterface;
+using UserService.Service.DomainService;
 
 namespace UserService.Controller;
 
 public class UsergRpcController(
     IUserService userService,
-    IValidator<User> userValidator,
-    IUserDomainControllerConverter userDomainControllerConverter) : Grpc.UserService.UserServiceBase
+    IValidator<IUser> userValidator,
+    IUserRequestControllerConverter userRequestControllerConverter)
+    : Grpc.UserService.UserServiceBase
 {
     public override async Task<CreateUserResponse> CreateUser(CreateUserRequest request, ServerCallContext context)
     {
-        var user = userDomainControllerConverter.ConvertToDomainModel(request);
-
+        var user = userRequestControllerConverter.ConvertToCreateRequestModel(request);
         var validationResult = userValidator.Validate(user);
         if (!validationResult.IsValid)
         {
@@ -77,7 +77,7 @@ public class UsergRpcController(
         var response = new UsersResponse();
         foreach (var user in result.Value)
         {
-            response.Users.Add(userDomainControllerConverter.ConvertToControllerModel(user));
+            response.Users.Add(userRequestControllerConverter.ConvertToMessage(user));
         }
 
         response.Message = "Found successfully";
@@ -87,16 +87,7 @@ public class UsergRpcController(
 
     public override async Task<UpdateUserResponse> UpdateUser(UpdateUserRequest request, ServerCallContext context)
     {
-        var user = new User
-        (
-            request.Id,
-            "unchanged_login",
-            request.Password,
-            request.Name,
-            request.Surname,
-            request.Age
-        );
-
+        var user = userRequestControllerConverter.ConvertToUpdateRequestModel(request);
         var validationResult = userValidator.Validate(user);
         if (!validationResult.IsValid)
         {
