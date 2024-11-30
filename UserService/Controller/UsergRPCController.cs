@@ -2,7 +2,7 @@ using Grpc.Core;
 using UserService.Grpc;
 using FluentValidation;
 using UserService.Controller.Factory;
-using UserService.Service.DomainService;
+using UserService.Service.DomainService.interfaces;
 using User = UserService.Service.DomainModel.User;
 
 namespace UserService.Controller;

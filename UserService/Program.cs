@@ -7,8 +7,10 @@ using UserService.Controller.Factory;
 using UserService.Interceptors;
 using UserService.Repository;
 using UserService.Repository.DbModels;
+using UserService.Repository.interfaces;
 using UserService.Service.DomainModel;
 using UserService.Service.DomainService;
+using UserService.Service.DomainService.interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,13 +26,14 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 
 builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("KafkaSettings"));
 builder.Services.AddSingleton<EventDispatcher.Dispatchers.EventDispatcher>();
+builder.Services.AddSingleton<IRateLimitRepository, RateLimitRepository>();
+builder.Services.AddSingleton<IRateLimitService, RateLimitService>();
 
 builder.Services.AddGrpc(options =>
 {
     options.Interceptors.Add<AuthenticationInterceptor>();
     options.Interceptors.Add<RateLimitInterceptor>();
 });
-
 
 var app = builder.Build();
 

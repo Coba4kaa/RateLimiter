@@ -1,7 +1,7 @@
 using UserService.Repository;
 using UserService.Service.DomainModel;
 
-namespace UserService.Service.DomainService;
+namespace UserService.Service.DomainService.interfaces;
 
 public interface IUserService
 {

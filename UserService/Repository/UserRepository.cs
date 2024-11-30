@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using UserService.Service.DomainModel;
 using UserService.Repository.DbModels;
+using UserService.Repository.interfaces;
 
 namespace UserService.Repository
 {
