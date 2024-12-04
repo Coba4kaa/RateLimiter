@@ -7,6 +7,7 @@ namespace RateLimiter.Reader.Service.DomainServices
     public interface IRateLimitService
     {
         public IReadOnlyCollection<RateLimitDomainModel> GetCurrentRateLimits();
+        public RateLimitDomainModel? FindRateLimitForRoute(string route);
         public Task InitializeRateLimitsAsync();
         public Task ProcessRateLimitChangesAsync(IAsyncEnumerable<ChangeStreamDocument<RateLimitDbModel>> changes);
     }
