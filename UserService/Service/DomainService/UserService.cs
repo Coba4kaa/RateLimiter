@@ -31,7 +31,7 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
 
     public Task<Result<List<IUser>?>> GetUsersByName(string name, string surname, CancellationToken cancellationToken)
     {
-        var userResult = userRepository.GetByNameAsync(name, surname, cancellationToken);
+        var userResult= userRepository.GetByNameAsync(name, surname, cancellationToken);
         if (userResult.Result.IsSuccess && userResult.Result.Value != null)
         {
             userResult.Result.Value.ForEach(user =>
@@ -50,7 +50,15 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
     public Task<Result<bool>> UpdateUser(IUser user, CancellationToken cancellationToken)
     {
         memoryCache.Remove(user.Id);
-        return userRepository.UpdateAsync(user, cancellationToken);
+        var updateResult= userRepository.UpdateAsync(user, cancellationToken);
+        if (!updateResult.Result.IsSuccess)
+        {
+            return updateResult;
+        }
+        var updatedUser  = userRepository.GetByIdAsync(user.Id, cancellationToken);
+        memoryCache.Set(updatedUser.Id, updatedUser.Result.Value, TimeSpan.FromMinutes(10));
+        return updateResult;
+        
     }
 
     public Task<Result<bool>> DeleteUser(int id, CancellationToken cancellationToken)
