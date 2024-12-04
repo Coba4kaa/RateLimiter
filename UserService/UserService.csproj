@@ -13,7 +13,7 @@
     <ItemGroup>
         <PackageReference Include="Dapper" Version="2.1.35" />
         <PackageReference Include="FluentValidation" Version="11.10.0" />
-        <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
         <PackageReference Include="Grpc.Tools" Version="2.67.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,6 +29,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EventDispatcher\EventDispatcher.csproj" />
+      <ProjectReference Include="..\RateLimiter.Reader\RateLimiter.Reader.csproj" />
     </ItemGroup>
 
 </Project>

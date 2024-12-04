@@ -1,5 +1,6 @@
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+using RateLimiter.Reader.ConsumerService.Models;
 using UserService.Service.DomainService.interfaces;
 
 namespace UserService.Interceptors;
@@ -12,7 +13,11 @@ public class RateLimitInterceptor(IRateLimitService rateLimitService) : Intercep
         int.TryParse(context.RequestHeaders.GetValue("user_id"), out var userId);
         var methodName = context.Method;
 
-        await rateLimitService.CheckRateLimitAsync(userId, methodName);
+        if (await rateLimitService.IsRateLimitExceededAsync(userId, methodName))
+        {
+            throw new RpcException(new Status(StatusCode.ResourceExhausted,
+                "Rate limit exceeded. Please try again later."));
+        }
 
         return await continuation(request, context);
     }
