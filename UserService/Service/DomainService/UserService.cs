@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using UserService.Grpc;
 using UserService.Repository;
 using UserService.Service.DomainInterface;
 
@@ -65,7 +66,7 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
             return userRepository.UpdateAsync(user, cancellationToken);
         }
         
-        var updatedUser = new UserModel
+        var updatedUser = new User
         {
             Id = user.Id, 
             Login = cachedUser.Login,
