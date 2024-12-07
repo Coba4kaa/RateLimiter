@@ -3,7 +3,6 @@ using FluentValidation;
 using StackExchange.Redis;
 using UserService;
 using UserService.Controller;
-using UserService.Controller.Converter;
 using UserService.Interceptors;
 using UserService.Repository;
 using UserService.Service.DomainInterface;
@@ -12,7 +11,6 @@ using UserService.Service.DomainService;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("ConnectionStrings"));
-builder.Services.AddSingleton<IUserRequestControllerConverter, UserRequestControllerConverter>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IUserService, UserService.Service.DomainService.UserService>();
 builder.Services.AddSingleton<IValidator<IUser>, UserValidator>();

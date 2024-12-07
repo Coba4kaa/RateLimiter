@@ -1,7 +1,6 @@
 using Grpc.Core;
 using UserService.Grpc;
 using FluentValidation;
-using UserService.Controller.Converter;
 using UserService.Service.DomainInterface;
 using UserService.Service.DomainService;
 
@@ -9,14 +8,12 @@ namespace UserService.Controller;
 
 public class UsergRpcController(
     IUserService userService,
-    IValidator<IUser> userValidator,
-    IUserRequestControllerConverter userRequestControllerConverter)
+    IValidator<IUser> userValidator)
     : Grpc.UserService.UserServiceBase
 {
     public override async Task<CreateUserResponse> CreateUser(CreateUserRequest request, ServerCallContext context)
     {
-        var user = userRequestControllerConverter.ConvertToCreateRequestModel(request);
-        var validationResult = userValidator.Validate(user);
+        var validationResult = userValidator.Validate(request);
         if (!validationResult.IsValid)
         {
             var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
@@ -24,7 +21,7 @@ public class UsergRpcController(
         }
 
         var cancellationToken = context.CancellationToken;
-        var result = await userService.CreateUser(user, cancellationToken);
+        var result = await userService.CreateUser(request, cancellationToken);
 
         return new CreateUserResponse
         {
@@ -77,7 +74,15 @@ public class UsergRpcController(
         var response = new UsersResponse();
         foreach (var user in result.Value)
         {
-            response.Users.Add(userRequestControllerConverter.ConvertToMessage(user));
+            response.Users.Add(new Grpc.User
+            {
+                Id = user.Id,
+                Login = user.Login,
+                Password = user.Password,
+                Name = user.Name,
+                Surname = user.Surname,
+                Age = user.Age
+            });
         }
 
         response.Message = "Found successfully";
@@ -87,8 +92,7 @@ public class UsergRpcController(
 
     public override async Task<UpdateUserResponse> UpdateUser(UpdateUserRequest request, ServerCallContext context)
     {
-        var user = userRequestControllerConverter.ConvertToUpdateRequestModel(request);
-        var validationResult = userValidator.Validate(user);
+        var validationResult = userValidator.Validate(request);
         if (!validationResult.IsValid)
         {
             var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
@@ -96,7 +100,7 @@ public class UsergRpcController(
         }
 
         var cancellationToken = context.CancellationToken;
-        var result = await userService.UpdateUser(user, cancellationToken);
+        var result = await userService.UpdateUser(request, cancellationToken);
 
         return new UpdateUserResponse
         {

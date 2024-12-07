@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using UserService.Grpc;
 using UserService.Service.DomainInterface;
 
 namespace UserService.Repository
@@ -44,7 +45,7 @@ namespace UserService.Repository
             try
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
-                var dbModel = await connection.QueryFirstOrDefaultAsync<UserModel>(command);
+                var dbModel = await connection.QueryFirstOrDefaultAsync<User>(command);
                 return dbModel == null ? Result<IUser>.Failure($"User with ID {id} not found") : Result<IUser>.Success(dbModel);
             }
             catch (PostgresException ex)
@@ -66,7 +67,7 @@ namespace UserService.Repository
             try
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
-                var dbModels = await connection.QueryAsync<UserModel>(command);
+                var dbModels = await connection.QueryAsync<User>(command);
                 var users = dbModels.ToList();
                 return users.Count == 0 ? Result<List<IUser>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<IUser>?>.Success(users.OfType<IUser>().ToList());
             }

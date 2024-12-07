@@ -1,3 +1,4 @@
+using UserService.Grpc;
 using UserService.Service.DomainInterface;
 
 namespace UserService.Controller;
@@ -11,7 +12,7 @@ public class UserValidator : AbstractValidator<IUser>
         RuleFor(user => user.Login)
             .NotEmpty().WithMessage("Login must not be empty.")
             .Length(4, 20).WithMessage("Login must be between 4 and 20 characters.")
-            .When(user => user is CreateUserRequestModel);
+            .When(user => user is CreateUserRequest);
         
         RuleFor(user => user.Password)
             .NotEmpty().WithMessage("Password must not be empty.")
