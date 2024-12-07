@@ -44,7 +44,7 @@ namespace UserService.Repository
             try
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
-                var dbModel = await connection.QueryFirstOrDefaultAsync<UserDbModel>(command);
+                var dbModel = await connection.QueryFirstOrDefaultAsync<UserModel>(command);
                 return dbModel == null ? Result<IUser>.Failure($"User with ID {id} not found") : Result<IUser>.Success(dbModel);
             }
             catch (PostgresException ex)
@@ -66,7 +66,7 @@ namespace UserService.Repository
             try
             {
                 var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
-                var dbModels = await connection.QueryAsync<UserDbModel>(command);
+                var dbModels = await connection.QueryAsync<UserModel>(command);
                 var users = dbModels.ToList();
                 return users.Count == 0 ? Result<List<IUser>?>.Failure($"No users found with name {name} and surname {surname}") : Result<List<IUser>?>.Success(users.OfType<IUser>().ToList());
             }
