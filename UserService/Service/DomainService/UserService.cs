@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Caching.Memory;
-using UserService.Grpc;
 using UserService.Repository;
+using UserService.Repository.Models;
 using UserService.Service.DomainInterface;
 
 namespace UserService.Service.DomainService;
 
 public class UserService(IUserRepository userRepository, IMemoryCache memoryCache) : IUserService
 {
+    private readonly object _cacheLock = new();
     public Task<Result<bool>> CreateUser(IUser user, CancellationToken cancellationToken)
     {
         return userRepository.CreateAsync(user, cancellationToken);
@@ -65,32 +66,31 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
         {
             return userRepository.UpdateAsync(user, cancellationToken);
         }
-        
-        var updatedUser = new User
+
+        var updatedUser = new UserDbModel
         {
-            Id = user.Id, 
+            Id = user.Id,
             Login = cachedUser.Login,
-            Password = user.Password, 
-            Name = user.Name, 
-            Surname = user.Surname, 
+            Password = user.Password,
+            Name = user.Name,
+            Surname = user.Surname,
             Age = user.Age
-            
         };
-        memoryCache.Set(updatedUser.Id, updatedUser, TimeSpan.FromMinutes(10));
         var cachedNameSurnameKey = $"{updatedUser.Name}_{updatedUser.Surname}";
-        if (!memoryCache.TryGetValue(cachedNameSurnameKey, out List<IUser>? cachedUsers))
+        lock (_cacheLock)
         {
-            return userRepository.UpdateAsync(user, cancellationToken);
-            
+            memoryCache.Set(updatedUser.Id, updatedUser, TimeSpan.FromMinutes(10));
+            if (memoryCache.TryGetValue(cachedNameSurnameKey, out List<IUser>? cachedUsers))
+            {
+                var userIndex = cachedUsers.FindIndex(u => u.Id == user.Id);
+                if (userIndex >= 0)
+                {
+                    cachedUsers[userIndex] = updatedUser;
+                    memoryCache.Set(cachedNameSurnameKey, cachedUsers, TimeSpan.FromMinutes(10));
+                }
+            }
         }
-        
-        var userIndex = cachedUsers.FindIndex(u => u.Id == user.Id);
-        if (userIndex >= 0)
-        {
-            cachedUsers[userIndex] = updatedUser;
-            memoryCache.Set(cachedNameSurnameKey, cachedUsers, TimeSpan.FromMinutes(10));
-        }
-        
+
         return userRepository.UpdateAsync(user, cancellationToken);
     }
 
@@ -107,22 +107,24 @@ public class UserService(IUserRepository userRepository, IMemoryCache memoryCach
         {
             return userRepository.DeleteAsync(id, cancellationToken);
         }
-        
-        var userIndex = cachedUsers.FindIndex(u => u.Id == id);
-        if (userIndex < 0)
+
+        lock (_cacheLock)
         {
-            return userRepository.DeleteAsync(id, cancellationToken);
+            var userIndex = cachedUsers.FindIndex(u => u.Id == id);
+            if (userIndex >= 0)
+            {
+                cachedUsers.RemoveAt(userIndex);
+                if (cachedUsers.Count == 0)
+                {
+                    memoryCache.Remove(cachedNameSurnameKey);
+                }
+                else
+                {
+                    memoryCache.Set(cachedNameSurnameKey, cachedUsers, TimeSpan.FromMinutes(10));
+                }
+            }
         }
-        
-        cachedUsers.RemoveAt(userIndex);
-        if (cachedUsers.Count == 0)
-        {
-            memoryCache.Remove(cachedNameSurnameKey);
-        }
-        else
-        {
-            memoryCache.Set(cachedNameSurnameKey, cachedUsers, TimeSpan.FromMinutes(10));
-        }
+
         return userRepository.DeleteAsync(id, cancellationToken);
     }
 }
