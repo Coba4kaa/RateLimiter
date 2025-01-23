@@ -13,17 +13,23 @@
     <ItemGroup>
         <PackageReference Include="Dapper" Version="2.1.35" />
         <PackageReference Include="FluentValidation" Version="11.10.0" />
-        <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
         <PackageReference Include="Grpc.Tools" Version="2.67.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0-rc.2.24473.5" />
         <PackageReference Include="Npgsql" Version="8.0.4" />
+        <PackageReference Include="StackExchange.Redis" Version="2.8.22" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Properties\launchSettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EventDispatcher\EventDispatcher.csproj" />
+      <ProjectReference Include="..\RateLimiter.Reader\RateLimiter.Reader.csproj" />
     </ItemGroup>
 
 </Project>

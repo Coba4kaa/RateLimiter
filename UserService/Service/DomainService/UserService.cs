@@ -1,5 +1,7 @@
 using UserService.Repository;
+using UserService.Repository.interfaces;
 using UserService.Service.DomainModel;
+using UserService.Service.DomainService.interfaces;
 
 namespace UserService.Service.DomainService;
 
