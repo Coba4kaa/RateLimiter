@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using UserService.Repository.interfaces;
 using UserService.Repository.Models;
 using UserService.Service.DomainInterface;
 

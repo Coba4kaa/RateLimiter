@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using UserService.Repository;
+using UserService.Repository.interfaces;
 using UserService.Repository.Models;
 using UserService.Service.DomainInterface;
+using UserService.Service.DomainService.interfaces;
 
 namespace UserService.Service.DomainService;
 

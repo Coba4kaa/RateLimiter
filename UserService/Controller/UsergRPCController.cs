@@ -2,7 +2,7 @@ using Grpc.Core;
 using UserService.Grpc;
 using FluentValidation;
 using UserService.Service.DomainInterface;
-using UserService.Service.DomainService;
+using UserService.Service.DomainService.interfaces;
 
 namespace UserService.Controller;
 

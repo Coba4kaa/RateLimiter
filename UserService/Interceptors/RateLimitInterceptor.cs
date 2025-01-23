@@ -1,6 +1,5 @@
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using RateLimiter.Reader.ConsumerService.Models;
 using UserService.Service.DomainService.interfaces;
 
 namespace UserService.Interceptors;
